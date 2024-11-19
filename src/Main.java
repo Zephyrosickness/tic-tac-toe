@@ -34,10 +34,9 @@ public class Main {
             setCell(players[1]); //player 2's move
 
             //if win, do a YN input for the isplaying bool
-            if(isWon){
-                isPlaying = InputHelper.getYN("Would you like to play again?");
-            }
+            if(isWon){isPlaying = InputHelper.getYN("Would you like to play again?");}
 
+        clearBoard();
         }while(isPlaying);
     }
 
