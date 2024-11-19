@@ -3,8 +3,10 @@ import java.util.Objects;
 
 public class Main {
     //init var
-    private static int BOARD_SIZE = 3;
+    private static final int BOARD_SIZE = 3;
     private static final String[][] board = new String[BOARD_SIZE][BOARD_SIZE];
+    private static final String EMPTY_BOX = "-";
+    private static boolean isWon = false;
 
     public static void main(String[] args){
         boolean isPlaying = true;
@@ -23,7 +25,6 @@ public class Main {
                 namePlayerLoop = InputHelper.getYN("Do you want to name another player?");
             }while(namePlayerLoop);
         }
-        BOARD_SIZE = InputHelper.getPositiveInt("How large would you like your board to be?");
 
         displayBoard();
 
@@ -31,14 +32,16 @@ public class Main {
         do{
             setCell(players[0]); //player 1's move
             setCell(players[1]); //player 2's move
-            System.out.println(verticalWin(player1));
-            //check for win
+
             //if win, do a YN input for the isplaying bool
+            if(isWon){
+                isPlaying = InputHelper.getYN("Would you like to play again?");
+            }
 
         }while(isPlaying);
     }
 
-    private static void clearBoard(){for(int i = 0; i<BOARD_SIZE; i++){board[i] = new String[]{"-", "-", "-"};}}
+    private static void clearBoard(){for(int i = 0; i<BOARD_SIZE; i++){board[i] = new String[]{EMPTY_BOX, EMPTY_BOX, EMPTY_BOX};}}
 
     private static void displayBoard(){
         System.out.println();
@@ -46,21 +49,26 @@ public class Main {
         System.out.println();
     }
 
+    //this is a boolean bc u need a way to tell the main method the game is over so they can prompt to play again
     private static void setCell(Player player){
         //tbh i could just use a regex to ensure the player inputs something along the lines of [X, Y] and then read the R/C using substrings and integer.parseInt but tbh ive already overengineered this program enough
         boolean legal;
         int row ;
         int col;
-        do {
-            row = InputHelper.getInt(player.name + ", enter move row");
-            col = InputHelper.getInt(player.name + ", enter move column");
-            legal = legalMoveCheck(row, col);
-            if(!legal){System.out.println("Sorry, you entered invalid options. Try again.");}
-        }while (!legal);
+        
+        //prevents game from still playing if the player already won
+        if(!isWon){
+            do {
+                row = InputHelper.getRangedInt(player.name + ", enter move row",1,3);
+                col = InputHelper.getRangedInt(player.name + ", enter move column",1,3);
+                legal = legalMoveCheck(row, col);
+                if (!legal) {System.out.println("Sorry, you entered invalid options. Try again.");}
+            }while(!legal);
 
-        board[row-1][col-1] = player.icon; //must be appended by 1 because the indexes are 0-2
-        displayBoard();
-        winCheck(player);
+            board[row-1][col-1] = player.icon; //must be appended by 1 because the indexes are 0-2
+            displayBoard();
+            isWon = winCheck(player);
+        }
     }
 
     private static boolean legalMoveCheck(int row, int col){
@@ -69,38 +77,81 @@ public class Main {
         boolean alreadyExists = true;
         if(row>=1&&row<=BOARD_SIZE){rowCheck=true;}
         if(col>=1&&col<=BOARD_SIZE){colCheck=true;}
-        if(!Objects.equals(board[row - 1][col - 1], "-")){alreadyExists = false;}
+        if(!Objects.equals(board[row - 1][col - 1], EMPTY_BOX)){alreadyExists = false;}
         return rowCheck&&colCheck&&alreadyExists;
     }
 
-    private static void winCheck(Player player){
+    private static boolean winCheck(Player player){
+        boolean horizontal = horizontalWinCheck(player);
+        boolean vertical = verticalWinCheck(player);
+        boolean diagonal = diagonalWinCheck(player);
+        boolean playerWon = horizontal||vertical||diagonal;
+        boolean tie = tieCheck();
 
+        if(horizontal||vertical||diagonal){System.out.println(player.name+" won!");
+        }else if(tie){System.out.println("Tie!");}
+
+        return tie||playerWon;
     }
 
-    private static boolean horizontalWin(Player player){
-        for(String[] i:board){
-            if (Arrays.equals(i, new String[]{player.icon, player.icon, player.icon})){
-                return true;
+    //checks for horizontal win
+    private static boolean horizontalWinCheck(Player player){
+        for(String[] i:board){if (Arrays.equals(i, new String[]{player.icon, player.icon, player.icon})){return true;}}
+        return false;
+    }
+
+    //checks for vertical win
+    private static boolean verticalWinCheck(Player player){
+        for(int col = 0; col<BOARD_SIZE; col++){
+            boolean win = true;
+            for(String[] row : board){
+                if(!row[col].equals(player.icon)){
+                    win = false;
+                    break;
+                }
             }
+            if(win){return true;}
         }
         return false;
     }
 
-    private static boolean verticalWin(Player player){
-        boolean win = false;
-        for(int i = 0; i<BOARD_SIZE;i++) {
-            System.out.println(i);
-            for (String[] j : board){
-                win = Objects.equals(j[i], player.icon);
-                if(!win){break;}
+    private static boolean diagonalWinCheck(Player player){
+        boolean leftToRight = true;
+        boolean rightToLeft = true;
+        //checks if diagonal from left to right
+        for(int i = 0; i<BOARD_SIZE;i++){
+            if(!board[i][i].equals(player.icon)){
+                leftToRight = false;
+                break;
             }
         }
-        return win;
+        //checks if diagonal from right to left
+        for(int i = BOARD_SIZE-1; i>0;i--){
+            if(!board[i][(BOARD_SIZE-1)-i].equals(player.icon)){
+                rightToLeft = false;
+                break;
+            }
+        }
+        return rightToLeft||leftToRight;
+    }
+
+    private static boolean tieCheck(){
+        boolean isTied = true;
+
+        for(String[] row:board){
+            for(String col:row){
+                if(col.equals(EMPTY_BOX)){
+                    isTied = false;
+                    break;
+                }
+            }
+        }
+        return isTied;
     }
 
     private static class Player{
         String name;
-        String icon; // x or O
+        String icon; // X or O
 
         private Player(String name, String icon){
             this.name = name;
