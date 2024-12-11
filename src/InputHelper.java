@@ -171,9 +171,7 @@ public class InputHelper {
             input = scan.nextLine().toLowerCase(); //casts input to lower case to account for case differences
 
             if(Arrays.asList(options).contains(input)) {
-                if(input.equalsIgnoreCase("y")||input.equalsIgnoreCase("yes")){
-                    output = true;
-                }
+                if(input.equalsIgnoreCase("y")||input.equalsIgnoreCase("yes")){output = true;}
                 break;
 
                 //casts options to arraylist because printing regular arrays isnt readable only lists are
